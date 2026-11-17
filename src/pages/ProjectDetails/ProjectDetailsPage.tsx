@@ -142,8 +142,12 @@ export const ProjectDetailsPage: React.FC = () => {
               size="md"
               leftIcon={<Github className="w-4 h-4" />}
               disabled={project.links?.github?.isPlaceholder}
+              target={project.links?.github?.isPlaceholder ? undefined : '_blank'}
+              rel={project.links?.github?.isPlaceholder ? undefined : 'noopener noreferrer'}
             >
-              Repository {project.links?.github?.isPlaceholder ? '(Placeholder)' : ''}
+              {project.links?.github?.isPlaceholder
+                ? 'Coming Soon'
+                : (project.links?.github?.label || 'View Source Code')}
             </Button>
 
             <Button
