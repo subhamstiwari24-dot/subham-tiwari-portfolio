@@ -118,7 +118,7 @@ export const HeroVisual: React.FC = () => {
       <motion.div
         animate={shouldReduceMotion ? {} : { y: [-4, 4, -4] }}
         transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-2 -right-2 sm:right-2 z-20 flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-card/90 backdrop-blur-md border border-accent-primary/30 shadow-subtle text-xs font-mono hover:scale-105 transition-transform"
+        className="absolute top-2 right-1 sm:right-2 z-20 flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-bg-card/95 border border-accent-primary/30 shadow-subtle text-xs font-mono hover:scale-105 transition-transform"
       >
         <div className="w-6 h-6 rounded-lg bg-accent-primary/15 flex items-center justify-center text-accent-primary">
           <Cpu className="w-3.5 h-3.5" />
@@ -133,7 +133,7 @@ export const HeroVisual: React.FC = () => {
       <motion.div
         animate={shouldReduceMotion ? {} : { y: [4, -4, 4] }}
         transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-        className="absolute -bottom-2 -left-2 sm:left-2 z-20 flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-card/90 backdrop-blur-md border border-accent-secondary/30 shadow-subtle text-xs font-mono hover:scale-105 transition-transform"
+        className="absolute -bottom-2 left-1 sm:left-2 z-20 flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-bg-card/95 border border-accent-secondary/30 shadow-subtle text-xs font-mono hover:scale-105 transition-transform"
       >
         <div className="w-6 h-6 rounded-lg bg-accent-secondary/15 flex items-center justify-center text-accent-secondary">
           <Code className="w-3.5 h-3.5" />

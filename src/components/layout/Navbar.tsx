@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ArrowUpRight, Github } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -15,10 +15,11 @@ export const Navbar: React.FC = () => {
   const shouldReduceMotion = useReducedMotion();
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  // Handle scroll detection for background blur elevation
+  // Handle scroll detection with functional state updates to prevent unnecessary re-renders
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      const isScrolled = window.scrollY > 20;
+      setScrolled((prev) => (prev !== isScrolled ? isScrolled : prev));
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -38,15 +39,21 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileMenuOpen]);
 
-  // Lock body scroll when mobile menu is open to prevent background scrolling
+  // Lock body scroll when mobile menu is open to prevent background scrolling across iOS Safari and Chrome
   useEffect(() => {
     if (mobileMenuOpen) {
+      document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
     } else {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
     }
     return () => {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
     };
   }, [mobileMenuOpen]);
 
@@ -77,13 +84,13 @@ export const Navbar: React.FC = () => {
     return () => observer.disconnect();
   }, [location.pathname]);
 
-  const toggleMobileMenu = () => {
+  const toggleMobileMenu = useCallback(() => {
     setMobileMenuOpen((prev) => !prev);
-  };
+  }, []);
 
-  const closeMobileMenu = () => {
+  const closeMobileMenu = useCallback(() => {
     setMobileMenuOpen(false);
-  };
+  }, []);
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
@@ -99,7 +106,9 @@ export const Navbar: React.FC = () => {
       if (location.pathname === '/') {
         const el = document.getElementById(targetId);
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth' });
+          requestAnimationFrame(() => {
+            el.scrollIntoView({ behavior: 'smooth' });
+          });
         }
       } else {
         navigate(`/${href}`);
@@ -110,10 +119,10 @@ export const Navbar: React.FC = () => {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 w-full transition-all duration-300',
+        'sticky top-0 z-50 w-full transition-colors duration-200',
         scrolled
           ? 'bg-bg-primary/95 backdrop-blur-md border-b border-border-subtle shadow-subtle'
-          : 'bg-bg-primary/70 backdrop-blur-sm border-b border-white/[0.04]'
+          : 'bg-bg-primary/80 backdrop-blur-sm border-b border-white/[0.04]'
       )}
     >
       <Container size="wide">
@@ -195,12 +204,12 @@ export const Navbar: React.FC = () => {
             </a>
           </div>
 
-          {/* Mobile Menu Toggle Button */}
+          {/* Mobile Menu Toggle Button (Touch target >= 44px, immediate tap response, touch-manipulation) */}
           <button
             ref={menuButtonRef}
             type="button"
             onClick={toggleMobileMenu}
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+            className="md:hidden min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl text-text-secondary hover:text-text-primary active:text-text-primary hover:bg-white/[0.05] active:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary transition-colors touch-manipulation select-none"
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation-drawer"
             aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -210,16 +219,16 @@ export const Navbar: React.FC = () => {
         </div>
       </Container>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Mobile Navigation Drawer (Optimized transform/opacity, no layout thrashing or heavy backdrop-blur) */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
             id="mobile-navigation-drawer"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="md:hidden border-b border-border-subtle bg-bg-secondary/95 backdrop-blur-xl px-4 py-5 space-y-3 shadow-glass"
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="md:hidden border-b border-border-subtle bg-bg-secondary w-full max-w-full px-4 py-4 space-y-3 shadow-2xl max-h-[calc(100vh-4rem)] overflow-y-auto"
           >
             <nav className="flex flex-col space-y-1" aria-label="Mobile Navigation">
               {siteConfig.navigation.map((item) => {
@@ -233,10 +242,10 @@ export const Navbar: React.FC = () => {
                     onClick={(e) => handleNavClick(e, item.href)}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
-                      'px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                      'min-h-[44px] flex items-center px-4 py-2.5 rounded-xl text-sm font-medium transition-colors touch-manipulation select-none',
                       isActive
-                        ? 'text-accent-primary bg-accent-primary/10'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-white/[0.05]'
+                        ? 'text-accent-primary bg-accent-primary/10 font-semibold'
+                        : 'text-text-secondary hover:text-text-primary active:text-text-primary hover:bg-white/[0.05] active:bg-white/[0.08]'
                     )}
                   >
                     {item.label}
@@ -250,7 +259,8 @@ export const Navbar: React.FC = () => {
                 href={siteConfig.socials.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs text-text-secondary hover:text-text-primary bg-white/[0.03] border border-border-subtle transition-colors"
+                onClick={closeMobileMenu}
+                className="min-h-[44px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs text-text-secondary hover:text-text-primary active:text-text-primary bg-white/[0.03] border border-border-subtle active:bg-white/[0.08] transition-colors touch-manipulation select-none"
               >
                 <Github className="w-3.5 h-3.5" />
                 <span>GitHub Profile</span>
@@ -259,7 +269,7 @@ export const Navbar: React.FC = () => {
               <a
                 href="#contact"
                 onClick={(e) => handleNavClick(e, '#contact')}
-                className="w-full text-center py-2.5 px-3 rounded-lg text-xs font-semibold bg-accent-primary text-white hover:bg-accent-primary-hover shadow-subtle transition-colors"
+                className="min-h-[44px] flex items-center justify-center w-full text-center py-2.5 px-3 rounded-xl text-xs font-semibold bg-accent-primary text-white hover:bg-accent-primary-hover active:bg-accent-primary/90 shadow-subtle transition-colors touch-manipulation select-none"
               >
                 Get in Touch
               </a>
